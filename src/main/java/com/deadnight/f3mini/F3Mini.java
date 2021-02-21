@@ -1,5 +1,6 @@
 package com.deadnight.f3mini;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -39,12 +40,16 @@ public class F3Mini {
 
     @SubscribeEvent
     public void onRenderOverlay(RenderGameOverlayEvent.Text event) {
-        if(!minecraftSupplier.get().gameSettings.showDebugInfo) {
+        if (!F3MiniConfig.GeneralConfig.enabled) {
+            return;
+        } else if (!minecraftSupplier.get().gameSettings.showDebugInfo) {
             return;
         }
 
+        Pattern p;
+
         try {
-            Pattern.compile(F3MiniConfig.GeneralConfig.regex);
+            p = Pattern.compile(F3MiniConfig.GeneralConfig.regex);
         } catch (PatternSyntaxException ex) {
             event.getRight().add("");
             event.getRight().add("F3 Mini:");
@@ -54,18 +59,24 @@ public class F3Mini {
 
         ListIterator<String> it = event.getLeft().listIterator();
         while(it.hasNext()) {
-            String line = it.next();
-            if(Pattern.matches(F3MiniConfig.GeneralConfig.regex, line)) {
+            if(shouldRemove(p, it.next())) {
                 it.remove();
             }
         }
 
         it = event.getRight().listIterator();
         while(it.hasNext()) {
-            String line = it.next();
-            if(Pattern.matches(F3MiniConfig.GeneralConfig.regex, line)) {
+            if(shouldRemove(p, it.next())) {
                 it.remove();
             }
+        }
+    }
+
+    private static Boolean shouldRemove(Pattern pattern, String line) {
+        if(pattern.matcher(line).matches()) {
+            return F3MiniConfig.GeneralConfig.removeMatching;
+        } else {
+            return !F3MiniConfig.GeneralConfig.removeMatching;
         }
     }
 }
